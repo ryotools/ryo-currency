@@ -1,0 +1,48 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on version tags
+  workflow_dispatch:  # Allow manual triggering
+    inputs:
+      tag:
+        required: true
+        description: release version
+      generate-changelogs:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build_linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build Linux binaries
+      id: foo
+      uses: ./.github/actions/build-linux/action.yml
+    - run: echo random-number "$RANDOM_NUMBER"
+      shell: bash
+      env:
+        RANDOM_NUMBER: ${{ steps.foo.outputs.random-number }}
+
+  release:
+    needs: build_linux
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download build artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: linux-binaries
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      if: github.ref_type == 'tag'
+      with:
+        files: |
+          doc/burned_premine_keyimages/*
+        # build/release/bin/*
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
