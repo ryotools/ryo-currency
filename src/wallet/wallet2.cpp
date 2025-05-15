@@ -857,6 +857,14 @@ crypto::public_key wallet2::get_subaddress_spend_public_key(const cryptonote::su
 	return hwdev.get_subaddress_spend_public_key(m_account.get_keys(), index);
 }
 //----------------------------------------------------------------------------------------------------
+boost::optional<cryptonote::subaddress_index> wallet2::get_subaddress_index(const cryptonote::account_public_address& address) const
+{
+	auto index = m_subaddresses.find(address.m_spend_public_key);
+	if (index == m_subaddresses.end())
+		return boost::none;
+	return index->second;
+}
+//----------------------------------------------------------------------------------------------------
 std::string wallet2::get_subaddress_as_str(const cryptonote::subaddress_index &index) const
 {
 	cryptonote::account_public_address address = get_subaddress(index);
@@ -3758,7 +3766,7 @@ void wallet2::load(const std::string &wallet_, const epee::wipeable_string &pass
 					try
 					{
 						GULPS_LOG_L0("Failed to open portable binary, trying unportable");
-						boost::filesystem::copy_file(m_wallet_file, m_wallet_file + ".unportable", boost::filesystem::copy_option::overwrite_if_exists);
+						boost::filesystem::copy_file(m_wallet_file, m_wallet_file + ".unportable", boost::filesystem::copy_options::overwrite_existing);
 						std::stringstream iss;
 						iss.str("");
 						iss << cache_data;
@@ -3789,7 +3797,7 @@ void wallet2::load(const std::string &wallet_, const epee::wipeable_string &pass
 				try
 				{
 					GULPS_LOG_L0("Failed to open portable binary, trying unportable");
-					boost::filesystem::copy_file(m_wallet_file, m_wallet_file + ".unportable", boost::filesystem::copy_option::overwrite_if_exists);
+					boost::filesystem::copy_file(m_wallet_file, m_wallet_file + ".unportable", boost::filesystem::copy_options::overwrite_existing);
 					std::stringstream iss;
 					iss.str("");
 					iss << buf;

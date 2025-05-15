@@ -97,6 +97,7 @@ class wallet_rpc_server : public epee::http_server_impl_base<wallet_rpc_server>
 	BEGIN_JSON_RPC_MAP("/json_rpc")
 	MAP_JON_RPC_WE("get_balance", on_getbalance, wallet_rpc::COMMAND_RPC_GET_BALANCE)
 	MAP_JON_RPC_WE("get_address", on_getaddress, wallet_rpc::COMMAND_RPC_GET_ADDRESS)
+	MAP_JON_RPC_WE("get_address_index", on_getaddress_index, wallet_rpc::COMMAND_RPC_GET_ADDRESS_INDEX)
 	MAP_JON_RPC_WE("getbalance", on_getbalance, wallet_rpc::COMMAND_RPC_GET_BALANCE)
 	MAP_JON_RPC_WE("getaddress", on_getaddress, wallet_rpc::COMMAND_RPC_GET_ADDRESS)
 	MAP_JON_RPC_WE("create_address", on_create_address, wallet_rpc::COMMAND_RPC_CREATE_ADDRESS)
@@ -165,12 +166,14 @@ class wallet_rpc_server : public epee::http_server_impl_base<wallet_rpc_server>
 	MAP_JON_RPC_WE("finalize_multisig", on_finalize_multisig, wallet_rpc::COMMAND_RPC_FINALIZE_MULTISIG)
 	MAP_JON_RPC_WE("sign_multisig", on_sign_multisig, wallet_rpc::COMMAND_RPC_SIGN_MULTISIG)
 	MAP_JON_RPC_WE("submit_multisig", on_submit_multisig, wallet_rpc::COMMAND_RPC_SUBMIT_MULTISIG)
+	MAP_JON_RPC_WE("validate_address", on_validate_address, wallet_rpc::COMMAND_RPC_VALIDATE_ADDRESS)
 	END_JSON_RPC_MAP()
 	END_URI_MAP2()
 
 	//json_rpc
 	bool on_getbalance(const wallet_rpc::COMMAND_RPC_GET_BALANCE::request &req, wallet_rpc::COMMAND_RPC_GET_BALANCE::response &res, epee::json_rpc::error &er);
 	bool on_getaddress(const wallet_rpc::COMMAND_RPC_GET_ADDRESS::request &req, wallet_rpc::COMMAND_RPC_GET_ADDRESS::response &res, epee::json_rpc::error &er);
+	bool on_getaddress_index(const wallet_rpc::COMMAND_RPC_GET_ADDRESS_INDEX::request& req, wallet_rpc::COMMAND_RPC_GET_ADDRESS_INDEX::response& res, epee::json_rpc::error& er);
 	bool on_create_address(const wallet_rpc::COMMAND_RPC_CREATE_ADDRESS::request &req, wallet_rpc::COMMAND_RPC_CREATE_ADDRESS::response &res, epee::json_rpc::error &er);
 	bool on_label_address(const wallet_rpc::COMMAND_RPC_LABEL_ADDRESS::request &req, wallet_rpc::COMMAND_RPC_LABEL_ADDRESS::response &res, epee::json_rpc::error &er);
 	bool on_get_accounts(const wallet_rpc::COMMAND_RPC_GET_ACCOUNTS::request &req, wallet_rpc::COMMAND_RPC_GET_ACCOUNTS::response &res, epee::json_rpc::error &er);

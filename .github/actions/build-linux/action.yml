@@ -1,0 +1,19 @@
+name: Build core binaries for Linux
+outputs:
+  random-number:
+    description: "Random number"
+    value: ${{ steps.random-number-generator.outputs.random-number }}
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/checkout@v4
+  # - name: Install dependencies
+  #   run: |
+  #     sudo apt-get update
+  #     sudo apt-get install -y libssl-dev libzmq3-dev libunbound-dev libsodium-dev libminiupnpc-dev libunwind8-dev liblzma-dev libreadline6-dev libldns-dev libexpat1-dev doxygen graphviz libpcsclite-dev libfmt-dev libeasyloggingpp-dev libcurl4-openssl-dev libboost1.74-all-dev
+  # - name: make
+  #   run: make
+    - name: Random Number Generator
+      id: random-number-generator
+      run: echo "random-number=$(echo $RANDOM)" >> $GITHUB_OUTPUT
+      shell: bash

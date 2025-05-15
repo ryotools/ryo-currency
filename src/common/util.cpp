@@ -76,6 +76,7 @@ using namespace epee;
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/format.hpp>
 #include <openssl/sha.h>
 
 
@@ -735,13 +736,16 @@ int vercmp(const char *v0, const char *v1)
 
 bool sha256sum(const uint8_t *data, size_t len, crypto::hash &hash)
 {
-	SHA256_CTX ctx;
-	if(!SHA256_Init(&ctx))
+	EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+	if(mdctx == nullptr)
 		return false;
-	if(!SHA256_Update(&ctx, data, len))
+	if(EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL) != 1)
 		return false;
-	if(!SHA256_Final((unsigned char *)hash.data, &ctx))
+	if(EVP_DigestUpdate(mdctx, data, len) != 1)
 		return false;
+	if(EVP_DigestFinal_ex(mdctx, reinterpret_cast<unsigned char*>(hash.data), nullptr) != 1)
+		return false;
+	EVP_MD_CTX_free(mdctx);
 	return true;
 }
 
@@ -755,8 +759,10 @@ bool sha256sum(const std::string &filename, crypto::hash &hash)
 	if(!f)
 		return false;
 	std::ifstream::pos_type file_size = f.tellg();
-	SHA256_CTX ctx;
-	if(!SHA256_Init(&ctx))
+	EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+	if(mdctx == nullptr)
+		return false;
+	if(EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL) != 1)
 		return false;
 	size_t size_left = file_size;
 	f.seekg(0, std::ios::beg);
@@ -767,13 +773,48 @@ bool sha256sum(const std::string &filename, crypto::hash &hash)
 		f.read(buf, read_size);
 		if(!f || !f.good())
 			return false;
-		if(!SHA256_Update(&ctx, buf, read_size))
+		if(EVP_DigestUpdate(mdctx, buf, read_size) != 1)
 			return false;
 		size_left -= read_size;
 	}
 	f.close();
-	if(!SHA256_Final((unsigned char *)hash.data, &ctx))
+	if(EVP_DigestFinal_ex(mdctx, reinterpret_cast<unsigned char*>(hash.data), nullptr) != 1)
 		return false;
+	EVP_MD_CTX_free(mdctx);
 	return true;
+}
+
+std::string get_human_readable_bytes(uint64_t bytes)
+{
+  // Use 1024 for "kilo", 1024*1024 for "mega" and so on instead of the more modern and standard-conforming
+  // 1000, 1000*1000 and so on, to be consistent with other Monero code that also uses base 2 units
+  struct byte_map
+  {
+      const char* const format;
+      const std::uint64_t bytes;
+  };
+
+   static constexpr const byte_map sizes[] =
+  {
+      {"%.0f B", 1024},
+      {"%.2f kB", 1024 * 1024},
+      {"%.2f MB", std::uint64_t(1024) * 1024 * 1024},
+      {"%.2f GB", std::uint64_t(1024) * 1024 * 1024 * 1024},
+      {"%.2f TB", std::uint64_t(1024) * 1024 * 1024 * 1024 * 1024}
+  };
+
+   struct bytes_less
+  {
+      bool operator()(const byte_map& lhs, const byte_map& rhs) const noexcept
+      {
+          return lhs.bytes < rhs.bytes;
+      }
+  };
+
+   const auto size = std::upper_bound(
+      std::begin(sizes), std::end(sizes) - 1, byte_map{"", bytes}, bytes_less{}
+  );
+  const std::uint64_t divisor = size->bytes / 1024;
+  return (boost::format(size->format) % (double(bytes) / divisor)).str();
 }
 }
